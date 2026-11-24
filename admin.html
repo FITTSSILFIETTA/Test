@@ -6,12 +6,22 @@
     <title>Админка - FITTSSILFI</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        .admin-form { background: #fff; padding: 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 600px; margin: 0 auto; }
+        .admin-container { display: flex; flex-direction: column; gap: 30px; max-width: 800px; margin: 0 auto; }
+        .admin-form { background: #fff; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .admin-form label { display: block; margin-top: 15px; font-weight: 500; }
         .admin-form input, .admin-form textarea, .admin-form select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; }
-        .admin-form textarea { resize: vertical; height: 80px; }
-        .admin-form button { margin-top: 20px; width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
-        .admin-form button:hover { background: #0056b3; }
+        .admin-form button[type="submit"] { margin-top: 20px; width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
+        .admin-form button[type="submit"]:hover { background: #0056b3; }
+        
+        /* Стили для списка банок */
+        .admin-list { background: #fff; padding: 20px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .admin-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #eee; }
+        .admin-item:last-child { border-bottom: none; }
+        .admin-item-info { display: flex; align-items: center; gap: 15px; }
+        .admin-item-info img { width: 40px; height: 60px; object-fit: contain; background: #f8f9fa; border-radius: 4px; }
+        .admin-item-actions button { padding: 8px 12px; margin-left: 5px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; }
+        .btn-edit { background: #ffc107; color: #000; }
+        .btn-delete { background: #dc3545; color: #fff; }
     </style>
 </head>
 <body>
@@ -23,46 +33,97 @@
     </header>
 
     <main>
-        <h2 style="text-align: center; margin-bottom: 30px;">Добавить новую банку</h2>
-        <form class="admin-form" id="addCanForm">
-            <label>Название банки</label>
-            <input type="text" id="canName" required placeholder="Например: Flash Up Ultra">
+        <div class="admin-container">
+            <!-- ФОРМА ДОБАВЛЕНИЯ / РЕДАКТИРОВАНИЯ -->
+            <div class="admin-form">
+                <h2 id="formTitle" style="text-align: center; margin-bottom: 20px;">Добавить новую банку</h2>
+                <form id="addCanForm">
+                    <input type="hidden" id="editId" value=""> <!-- Скрытое поле для ID при редактировании -->
+                    
+                    <label>Название банки</label>
+                    <input type="text" id="canName" required placeholder="Например: Flash Up Ultra">
 
-            <label>Бренд</label>
-            <input type="text" id="canBrand" required placeholder="Например: Flash Up">
+                    <label>Бренд</label>
+                    <input type="text" id="canBrand" required placeholder="Например: Flash Up">
 
-            <label>Ссылка на картинку (URL)</label>
-            <input type="url" id="canImage" required placeholder="https://example.com/can.jpg">
+                    <label>Ссылка на картинку (URL)</label>
+                    <input type="url" id="canImage" required placeholder="https://example.com/can.jpg">
 
-            <label>Цвет банки (для градиента)</label>
-            <input type="color" id="canColor" value="#ffcc00">
+                    <label>Цвет банки (для градиента)</label>
+                    <input type="color" id="canColor" value="#ffcc00">
 
-            <label>Оценка (от 1 до 10)</label>
-            <input type="number" id="canRating" min="1" max="10" value="10">
+                    <label>Оценка (от 1 до 10)</label>
+                    <input type="number" id="canRating" min="1" max="10" value="10">
 
-            <!-- НОВЫЕ ПОЛЯ -->
-            <label>Вкус (например: Манго, Кола, Ягоды)</label>
-            <input type="text" id="canTaste" placeholder="Манго">
+                    <label>Вкус</label>
+                    <input type="text" id="canTaste" placeholder="Барбарис с ванилью">
 
-            <label>Газация (например: Сильная, Средняя, Слабая)</label>
-            <input type="text" id="canGas" placeholder="Средняя">
+                    <label>Газация</label>
+                    <input type="text" id="canGas" placeholder="Средняя">
 
-            <label>Бодрость (например: Прет 5 часов, Слабая)</label>
-            <input type="text" id="canEnergy" placeholder="Бодрит отлично">
+                    <label>Бодрость</label>
+                    <input type="text" id="canEnergy" placeholder="Незаметная">
 
-            <label>Твой отзыв (плюсы/минусы)</label>
-            <textarea id="canReview" placeholder="Вкус бомба, но сахара слишком много..."></textarea>
+                    <label>Твой отзыв</label>
+                    <textarea id="canReview" placeholder="Вкус сбалансированный..."></textarea>
 
-            <button type="submit">Добавить в каталог</button>
-        </form>
+                    <button type="submit" id="submitBtn">Добавить в каталог</button>
+                    <button type="button" id="cancelBtn" style="display:none; width: 100%; margin-top: 10px; padding: 10px; background: #6c757d; color: #fff; border: none; border-radius: 8px; cursor: pointer;" onclick="resetForm()">Отмена</button>
+                </form>
+            </div>
+
+            <!-- СПИСОК ВСЕХ БАНОК -->
+            <div class="admin-list">
+                <h2 style="margin-bottom: 20px;">Твои банки</h2>
+                <div id="adminListContainer"></div>
+            </div>
+        </div>
     </main>
 
     <script src="app.js"></script>
     <script>
+        let cans = JSON.parse(localStorage.getItem('energyCans')) || [];
+
+        // Отрисовка списка банок в админке
+        function renderAdminList() {
+            const container = document.getElementById('adminListContainer');
+            container.innerHTML = '';
+            
+            if (cans.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #777;">Пока нет добавленных банок.</p>';
+                return;
+            }
+
+            // Показываем новые сверху
+            const sortedCans = [...cans].reverse();
+
+            sortedCans.forEach(can => {
+                const item = document.createElement('div');
+                item.className = 'admin-item';
+                item.innerHTML = `
+                    <div class="admin-item-info">
+                        <img src="${can.image}" alt="${can.name}" onerror="this.src='https://via.placeholder.com/40x60?text=No'">
+                        <div>
+                            <strong>${can.name}</strong><br>
+                            <small style="color: #777;">${can.brand} | ${can.rating}/10</small>
+                        </div>
+                    </div>
+                    <div class="admin-item-actions">
+                        <button class="btn-edit" onclick="editCan('${can.id}')">✏️</button>
+                        <button class="btn-delete" onclick="deleteCan('${can.id}')">🗑️</button>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Добавление или сохранение изменений
         document.getElementById('addCanForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            const newCan = {
-                id: Date.now().toString(), // Уникальный ID на основе времени
+            const editId = document.getElementById('editId').value;
+            
+            const canData = {
+                id: editId || Date.now().toString(),
                 name: document.getElementById('canName').value,
                 brand: document.getElementById('canBrand').value,
                 image: document.getElementById('canImage').value,
@@ -74,15 +135,68 @@
                 review: document.getElementById('canReview').value
             };
 
-            let cans = JSON.parse(localStorage.getItem('energyCans')) || [];
-            // Удаляем старые тестовые банки, если они без ID (чтобы не было дублей)
-            cans = cans.filter(c => c.id);
-            cans.push(newCan);
-            localStorage.setItem('energyCans', JSON.stringify(cans));
+            if (editId) {
+                // Редактирование существующей
+                const index = cans.findIndex(c => c.id === editId);
+                cans[index] = canData;
+                alert('Банка обновлена!');
+            } else {
+                // Добавление новой
+                cans.push(canData);
+                alert('Банка добавлена!');
+            }
 
-            alert('Банка успешно добавлена!');
-            this.reset();
+            localStorage.setItem('energyCans', JSON.stringify(cans));
+            resetForm();
+            renderAdminList();
         });
+
+        // Функция заполнения формы для редактирования
+        function editCan(id) {
+            const can = cans.find(c => c.id === id);
+            if (!can) return;
+
+            document.getElementById('editId').value = can.id;
+            document.getElementById('canName').value = can.name;
+            document.getElementById('canBrand').value = can.brand;
+            document.getElementById('canImage').value = can.image;
+            document.getElementById('canColor').value = can.color;
+            document.getElementById('canRating').value = can.rating;
+            document.getElementById('canTaste').value = can.taste || '';
+            document.getElementById('canGas').value = can.gas || '';
+            document.getElementById('canEnergy').value = can.energy || '';
+            document.getElementById('canReview').value = can.review || '';
+
+            document.getElementById('formTitle').innerText = 'Редактировать банку';
+            document.getElementById('submitBtn').innerText = 'Сохранить изменения';
+            document.getElementById('submitBtn').style.background = '#28a745';
+            document.getElementById('cancelBtn').style.display = 'block';
+            
+            // Прокручиваем вверх к форме
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Удаление
+        function deleteCan(id) {
+            if (confirm('Ты точно хочешь удалить эту банку?')) {
+                cans = cans.filter(c => c.id !== id);
+                localStorage.setItem('energyCans', JSON.stringify(cans));
+                renderAdminList();
+            }
+        }
+
+        // Сброс формы
+        function resetForm() {
+            document.getElementById('addCanForm').reset();
+            document.getElementById('editId').value = '';
+            document.getElementById('formTitle').innerText = 'Добавить новую банку';
+            document.getElementById('submitBtn').innerText = 'Добавить в каталог';
+            document.getElementById('submitBtn').style.background = 'var(--accent)';
+            document.getElementById('cancelBtn').style.display = 'none';
+        }
+
+        // Запуск при загрузке
+        renderAdminList();
     </script>
 </body>
 </html>
