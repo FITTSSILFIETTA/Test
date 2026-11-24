@@ -7,99 +7,169 @@
     <link rel="stylesheet" href="style.css">
     <style>
         .admin-container { display: flex; flex-direction: column; gap: 30px; max-width: 800px; margin: 0 auto; }
-        .admin-form { background: #fff; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .panel { background: #fff; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .admin-form label { display: block; margin-top: 15px; font-weight: 500; }
         .admin-form input, .admin-form textarea { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; }
         .admin-form button[type="submit"] { margin-top: 20px; width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
         
-        .admin-list { background: #fff; padding: 20px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .admin-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #eee; }
         .admin-item-info { display: flex; align-items: center; gap: 15px; }
         .admin-item-info img { width: 40px; height: 60px; object-fit: contain; background: #f8f9fa; border-radius: 4px; }
         .admin-item-actions button { padding: 8px 12px; margin-left: 5px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; }
         .btn-edit { background: #ffc107; color: #000; }
         .btn-delete { background: #dc3545; color: #fff; }
+
+        /* Стили для статистики и логов */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #e0e0e0; }
+        .stat-card h4 { margin: 0 0 5px; color: #777; font-size: 14px; font-weight: normal; }
+        .stat-card span { font-size: 24px; font-weight: bold; color: var(--text-color); }
+        .log-list { max-height: 200px; overflow-y: auto; background: #1e1e1e; color: #00ff00; font-family: monospace; font-size: 12px; padding: 15px; border-radius: 8px; }
+        .log-entry { margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 5px; }
     </style>
 </head>
 <body>
     <script>
-        // Проверка: если человек не вводил пароль, выкидываем его на страницу входа
         if (sessionStorage.getItem('isAdmin') !== 'true') {
             window.location.href = "login.html";
         }
     </script>
+
     <header>
         <div class="logo">⚡ FITTSSILFI</div>
-        <nav>
-            <a href="index.html">Каталог</a>
-        </nav>
+        <nav><a href="index.html">Каталог</a></nav>
     </header>
 
     <main>
         <div class="admin-container">
-            <div class="admin-form">
+            
+            <!-- СТАТИСТИКА -->
+            <div class="panel">
+                <h2 style="margin-bottom: 20px;">📊 Статистика коллекции</h2>
+                <div class="stats-grid" id="statsGrid">
+                    <!-- Заполняется через JS -->
+                </div>
+            </div>
+
+            <!-- ФОРМА -->
+            <div class="panel admin-form">
                 <h2 id="formTitle" style="text-align: center; margin-bottom: 20px;">Добавить новую банку</h2>
                 <form id="addCanForm">
                     <input type="hidden" id="editId" value="">
-                    
                     <label>Название банки</label>
                     <input type="text" id="canName" required placeholder="Например: Flash Up Ultra">
-
                     <label>Бренд</label>
                     <input type="text" id="canBrand" required placeholder="Например: Flash Up">
-
                     <label>Ссылка на картинку (URL)</label>
                     <input type="url" id="canImage" required placeholder="https://example.com/can.jpg">
-
-                    <label>Цвет банки (для градиента)</label>
+                    <label>Цвет банки</label>
                     <input type="color" id="canColor" value="#ffcc00">
-
-                    <label>Оценка (от 1 до 10)</label>
+                    <label>Оценка (1-10)</label>
                     <input type="number" id="canRating" min="1" max="10" value="10">
-
                     <label>Вкус</label>
                     <input type="text" id="canTaste" placeholder="Барбарис с ванилью">
-
                     <label>Газация</label>
                     <input type="text" id="canGas" placeholder="Средняя">
-
                     <label>Бодрость</label>
                     <input type="text" id="canEnergy" placeholder="Незаметная">
-
                     <label>Твой отзыв</label>
                     <textarea id="canReview" placeholder="Вкус сбалансированный..."></textarea>
-
                     <button type="submit" id="submitBtn">Добавить в каталог</button>
                     <button type="button" id="cancelBtn" style="display:none; width: 100%; margin-top: 10px; padding: 10px; background: #6c757d; color: #fff; border: none; border-radius: 8px; cursor: pointer;" onclick="resetForm()">Отмена</button>
                 </form>
             </div>
 
-            <div class="admin-list">
+            <!-- СПИСОК БАНОК -->
+            <div class="panel">
                 <h2 style="margin-bottom: 20px;">Твои банки</h2>
                 <div id="adminListContainer"></div>
             </div>
+
+            <!-- ЛОГИ -->
+            <div class="panel">
+                <h2 style="margin-bottom: 20px;">📝 Журнал действий (Логи)</h2>
+                <div class="log-list" id="logContainer">
+                    <!-- Логи через JS -->
+                </div>
+                <button onclick="clearLogs()" style="margin-top: 15px; background: #dc3545; color: #fff; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer;">Очистить логи</button>
+            </div>
+
         </div>
     </main>
 
     <script>
-        // Загружаем данные
         let cans = JSON.parse(localStorage.getItem('energyCans')) || [];
-
-        // ФИКС: Если в массиве есть банки без ID (старые тестовые), удаляем их
         cans = cans.filter(can => can && can.id);
         localStorage.setItem('energyCans', JSON.stringify(cans));
 
+        // --- ЛОГИ ---
+        function addLog(action) {
+            let logs = JSON.parse(localStorage.getItem('adminLogs')) || [];
+            const now = new Date();
+            const timeString = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+            logs.push(`[${timeString}] ${action}`);
+            localStorage.setItem('adminLogs', JSON.stringify(logs));
+            renderLogs();
+        }
+
+        function renderLogs() {
+            const container = document.getElementById('logContainer');
+            const logs = JSON.parse(localStorage.getItem('adminLogs')) || [];
+            if (logs.length === 0) {
+                container.innerHTML = '<div style="color: #888;">Логов пока нет...</div>';
+                return;
+            }
+            // Показываем последние 20 записей
+            container.innerHTML = logs.slice(-20).reverse().map(log => `<div class="log-entry">${log}</div>`).join('');
+        }
+
+        function clearLogs() {
+            if(confirm('Очистить все логи?')) {
+                localStorage.removeItem('adminLogs');
+                renderLogs();
+            }
+        }
+
+        // --- СТАТИСТИКА ---
+        function renderStats() {
+            const grid = document.getElementById('statsGrid');
+            if (cans.length === 0) {
+                grid.innerHTML = '<p style="grid-column: span 2; text-align:center; color:#777;">Добавь банки, чтобы увидеть статистику.</p>';
+                return;
+            }
+            
+            // Считаем средний балл
+            const totalRating = cans.reduce((sum, can) => sum + Number(can.rating), 0);
+            const avgRating = (totalRating / cans.length).toFixed(1);
+            
+            // Считаем уникальные бренды
+            const uniqueBrands = new Set(cans.map(c => c.brand)).size;
+
+            grid.innerHTML = `
+                <div class="stat-card">
+                    <h4>Всего банок</h4>
+                    <span>${cans.length}</span>
+                </div>
+                <div class="stat-card">
+                    <h4>Средний балл</h4>
+                    <span>${avgRating} / 10</span>
+                </div>
+                <div class="stat-card" style="grid-column: span 2;">
+                    <h4>Уникальных брендов</h4>
+                    <span>${uniqueBrands}</span>
+                </div>
+            `;
+        }
+
+        // --- СПИСОК ---
         function renderAdminList() {
             const container = document.getElementById('adminListContainer');
             container.innerHTML = '';
-            
             if (cans.length === 0) {
                 container.innerHTML = '<p style="text-align: center; color: #777;">Пока нет добавленных банок.</p>';
                 return;
             }
-
             const sortedCans = [...cans].reverse();
-
             sortedCans.forEach(can => {
                 const item = document.createElement('div');
                 item.className = 'admin-item';
@@ -120,12 +190,12 @@
             });
         }
 
+        // --- ОБРАБОТКА ФОРМЫ ---
         document.getElementById('addCanForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const editId = document.getElementById('editId').value;
-            
             const canData = {
-                id: editId || Date.now().toString(), // Всегда создаем уникальный ID
+                id: editId || Date.now().toString(),
                 name: document.getElementById('canName').value,
                 brand: document.getElementById('canBrand').value,
                 image: document.getElementById('canImage').value,
@@ -140,21 +210,23 @@
             if (editId) {
                 const index = cans.findIndex(c => c.id === editId);
                 if (index !== -1) cans[index] = canData;
+                addLog(`✏️ Отредактирована банка: ${canData.name}`);
                 alert('Банка обновлена!');
             } else {
                 cans.push(canData);
+                addLog(`➕ Добавлена банка: ${canData.name}`);
                 alert('Банка добавлена!');
             }
 
             localStorage.setItem('energyCans', JSON.stringify(cans));
             resetForm();
             renderAdminList();
+            renderStats(); // Обновляем статистику
         });
 
         function editCan(id) {
             const can = cans.find(c => c.id === id);
             if (!can) return;
-
             document.getElementById('editId').value = can.id;
             document.getElementById('canName').value = can.name;
             document.getElementById('canBrand').value = can.brand;
@@ -165,7 +237,6 @@
             document.getElementById('canGas').value = can.gas || '';
             document.getElementById('canEnergy').value = can.energy || '';
             document.getElementById('canReview').value = can.review || '';
-
             document.getElementById('formTitle').innerText = 'Редактировать банку';
             document.getElementById('submitBtn').innerText = 'Сохранить изменения';
             document.getElementById('submitBtn').style.background = '#28a745';
@@ -174,11 +245,13 @@
         }
 
         function deleteCan(id) {
-            if (confirm('Ты точно хочешь удалить эту банку?')) {
-                // Оставляем только те, чей ID НЕ совпадает с удаляемым
+            if (confirm('Удалить банку?')) {
+                const canName = cans.find(c => c.id === id)?.name || 'Неизвестно';
                 cans = cans.filter(c => c.id !== id);
                 localStorage.setItem('energyCans', JSON.stringify(cans));
+                addLog(`🗑️ Удалена банка: ${canName}`);
                 renderAdminList();
+                renderStats(); // Обновляем статистику
             }
         }
 
@@ -191,7 +264,11 @@
             document.getElementById('cancelBtn').style.display = 'none';
         }
 
+        // Инициализация
         renderAdminList();
+        renderStats();
+        renderLogs();
+        addLog('🔐 Выполнен вход в админ-панель');
     </script>
 </body>
 </html>
