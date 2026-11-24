@@ -9,15 +9,7 @@ function loadCatalog() {
     const brandFilter = document.getElementById('brandFilter');
     const searchInput = document.getElementById('searchInput');
     
-    let cans = JSON.parse(localStorage.getItem('energyCans'));
-
-    if (!cans || cans.length === 0) {
-        cans = [
-            { id: "1", name: "Red Bull Original", brand: "Red Bull", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/Red_Bull_Energy_Drink.jpg/220px-Red_Bull_Energy_Drink.jpg", color: "#0000ff", rating: 10, taste: "Классика", gas: "Сильная", energy: "Бодрит", review: "Легенда" },
-            { id: "2", name: "Flash Up Ultra", brand: "Flash", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Burn_Energy_Drink.jpg/220px-Burn_Energy_Drink.jpg", color: "#ffcc00", rating: 7, taste: "Цитрус", gas: "Средняя", energy: "Средне", review: "Норм" }
-        ];
-        localStorage.setItem('energyCans', JSON.stringify(cans));
-    }
+    let cans = JSON.parse(localStorage.getItem('energyCans')) || [];
 
     const brands = [...new Set(cans.map(can => can.brand))];
     brandFilter.innerHTML = '<option value="all">Все бренды</option>';
@@ -30,12 +22,14 @@ function loadCatalog() {
         data.forEach(can => {
             const card = document.createElement('div');
             card.className = 'card';
-            card.style.setProperty('--can-color', can.color);
-            // Обернули в ссылку на страницу банки, передавая ID в URL
+            
+            // Если есть сохраненный цвет — ставим его, иначе серый по умолчанию
+            card.style.setProperty('--can-color', can.color || '#ccc');
+            
             card.innerHTML = `
                 <a href="can.html?id=${can.id}" style="text-decoration: none; color: inherit; display: flex; flex-direction: column; align-items: center; width: 100%;">
                     <div class="card-img-container">
-                        <img src="${can.image}" alt="${can.name}" onerror="this.src='https://via.placeholder.com/150?text=Нет+фото'">
+                        <img src="${can.image}" alt="${can.name}" crossorigin="anonymous" onerror="this.src='https://via.placeholder.com/150?text=Нет+фото'">
                     </div>
                     <h3>${can.name}</h3>
                     <div class="brand">${can.brand}</div>
@@ -43,6 +37,23 @@ function loadCatalog() {
                 </a>
             `;
             grid.appendChild(card);
+
+            // МАГИЯ: Берем цвет прямо из картинки, если он не задан вручную
+            const img = card.querySelector('img');
+            img.onload = function() {
+                try {
+                    // Используем библиотеку ColorThief (она подключена в index.html)
+                    if(window.ColorThief) {
+                        const colorThief = new ColorThief();
+                        const dominantColor = colorThief.getColor(img);
+                        // Переводим в красивый градиент
+                        const gradient = `linear-gradient(90deg, rgb(${dominantColor[0]},${dominantColor[1]},${dominantColor[2]}), #ffffff)`;
+                        card.style.setProperty('--can-color', `rgb(${dominantColor[0]},${dominantColor[1]},${dominantColor[2]})`);
+                    }
+                } catch(e) {
+                    console.log("Не удалось вычислить цвет картинки");
+                }
+            };
         });
     }
 
