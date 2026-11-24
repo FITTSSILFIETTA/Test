@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Просмотр банки - FITTSSILFI</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .can-detail { background: #fff; border-radius: 16px; padding: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 600px; margin: 0 auto; border-top: 8px solid var(--can-color, #ccc); }
+        .can-detail img { display: block; max-width: 200px; margin: 0 auto 20px; filter: drop-shadow(0 5px 10px rgba(0,0,0,0.1)); }
+        .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .detail-row span:first-child { font-weight: 500; color: #777; }
+        .ai-box { background: #f0f7ff; padding: 20px; border-radius: 12px; margin-top: 30px; border: 1px solid #cce5ff; }
+        .ai-box textarea { width: 100%; height: 80px; padding: 10px; border: 1px solid #b3d7ff; border-radius: 8px; margin-bottom: 10px; font-family: inherit; resize: vertical; }
+        .ai-box button { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 16px; }
+        .ai-result { margin-top: 15px; font-style: italic; color: #333; background: #fff; padding: 15px; border-radius: 8px; border-left: 4px solid var(--accent); display: none; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">⚡ FITTSSILFI</div>
+        <nav>
+            <a href="index.html">Назад в каталог</a>
+        </nav>
+    </header>
+
+    <main>
+        <div id="canContainer" class="can-detail">
+            <!-- Сюда подгрузится информация о банке -->
+            <p style="text-align: center;">Загрузка...</p>
+        </div>
+    </main>
+
+    <script>
+        // Получаем ID банки из ссылки
+        const urlParams = new URLSearchParams(window.location.search);
+        const canId = urlParams.get('id');
+
+        // Загружаем данные
+        const cans = JSON.parse(localStorage.getItem('energyCans')) || [];
+        const currentCan = cans.find(c => c.id === canId);
+
+        if (currentCan) {
+            const container = document.getElementById('canContainer');
+            container.style.setProperty('--can-color', currentCan.color);
+            
+            container.innerHTML = `
+                <img src="${currentCan.image}" alt="${currentCan.name}" onerror="this.src='https://via.placeholder.com/200?text=Нет+фото'">
+                <h2 style="text-align: center; margin-bottom: 5px;">${currentCan.name}</h2>
+                <p style="text-align: center; color: #777; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px;">${currentCan.brand}</p>
+                
+                <div class="detail-row"><span>Оценка:</span> <strong>★ ${currentCan.rating}/10</strong></div>
+                <div class="detail-row"><span>Вкус:</span> <span>${currentCan.taste || 'Не указан'}</span></div>
+                <div class="detail-row"><span>Газация:</span> <span>${currentCan.gas || 'Не указана'}</span></div>
+                <div class="detail-row"><span>Бодрость:</span> <span>${currentCan.energy || 'Не указана'}</span></div>
+                
+                <div style="margin-top: 20px;">
+                    <h3 style="margin-bottom: 10px;">Мой отзыв</h3>
+                    <p style="line-height: 1.6; color: #444;">${currentCan.review || 'Текст отзыва пока не добавлен.'}</p>
+                </div>
+
+                <!-- Блок ИИ-помощника -->
+                <div class="ai-box">
+                    <h3 style="margin-bottom: 10px; color: #0056b3;">🤖 ИИ-Помощник по отзывам</h3>
+                    <p style="font-size: 14px; margin-bottom: 10px; color: #555;">Напиши свои мысли (например: "вкус сладкий, но бодрит слабо, дизайн топ"), и ИИ сделает из этого красивый текст.</p>
+                    <textarea id="aiInput" placeholder="Твои мысли о банке..."></textarea>
+                    <button onclick="generateAI()">Сгенерировать отзыв</button>
+                    <div id="aiResult" class="ai-result"></div>
+                </div>
+            `;
+        } else {
+            document.getElementById('canContainer').innerHTML = '<p style="text-align: center; color: red;">Банка не найдена.</p>';
+        }
+
+        // Простая имитация ИИ для оформления текста (работает без интернета)
+        function generateAI() {
+            const input = document.getElementById('aiInput').value;
+            const resultDiv = document.getElementById('aiResult');
+            
+            if (!input.trim()) {
+                alert("Напиши хоть что-то в поле ввода!");
+                return;
+            }
+
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '🔄 ИИ думает...';
+
+            // Имитация задержки работы ИИ (1.5 секунды)
+            setTimeout(() => {
+                // Локальный "ИИ", который переделывает текст в красивый отзыв
+                const templates = [
+                    `💡 <strong>Вердикт от ИИ:</strong> Отличный выбор! ${input} Это действительно ощущается при дегустации. Рекомендую попробовать всем любителям энергетиков.`,
+                    `🔥 <strong>Мнение ИИ:</strong> Согласен с автором. ${input} Такой вкус точно запомнится, а дизайн банки добавляет баллов.`,
+                    `⚡ <strong>Комментарий ИИ:</strong> Если кратко — ${input} Напиток хорошо справляется со своей задачей и оставляет приятное послевкусие.`
+                ];
+                
+                // Выбираем случайный шаблон
+                const randomTemplate = templates[Math.floor(Math.random() * templates.length)];
+                resultDiv.innerHTML = randomTemplate;
+                
+                // Автоматически подставляем в отзыв (если захочешь сохранить)
+                // currentCan.review = randomTemplate; // Пока просто показываем
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
