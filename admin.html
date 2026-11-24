@@ -22,6 +22,12 @@
     </style>
 </head>
 <body>
+    <script>
+        // Проверка: если человек не вводил пароль, выкидываем его на страницу входа
+        if (sessionStorage.getItem('isAdmin') !== 'true') {
+            window.location.href = "login.html";
+        }
+    </script>
     <header>
         <div class="logo">⚡ FITTSSILFI</div>
         <nav>
