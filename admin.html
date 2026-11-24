@@ -3,19 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Админка - Моя Энергополка</title>
+    <title>Админка - FITTSSILFI</title>
     <link rel="stylesheet" href="style.css">
     <style>
         .admin-form { background: #fff; padding: 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 600px; margin: 0 auto; }
         .admin-form label { display: block; margin-top: 15px; font-weight: 500; }
-        .admin-form input, .admin-form textarea, .admin-form select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid var(--border); border-radius: 8px; }
+        .admin-form input, .admin-form textarea, .admin-form select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; }
+        .admin-form textarea { resize: vertical; height: 80px; }
         .admin-form button { margin-top: 20px; width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
         .admin-form button:hover { background: #0056b3; }
     </style>
 </head>
 <body>
     <header>
-        <div class="logo">⚡ Моя Энергополка</div>
+        <div class="logo">⚡ FITTSSILFI</div>
         <nav>
             <a href="index.html">Каталог</a>
         </nav>
@@ -25,20 +26,32 @@
         <h2 style="text-align: center; margin-bottom: 30px;">Добавить новую банку</h2>
         <form class="admin-form" id="addCanForm">
             <label>Название банки</label>
-            <input type="text" id="canName" required placeholder="Например: Monster Ultra">
+            <input type="text" id="canName" required placeholder="Например: Flash Up Ultra">
 
             <label>Бренд</label>
-            <input type="text" id="canBrand" required placeholder="Например: Monster">
+            <input type="text" id="canBrand" required placeholder="Например: Flash Up">
 
             <label>Ссылка на картинку (URL)</label>
             <input type="url" id="canImage" required placeholder="https://example.com/can.jpg">
-            <small style="color: #777;">Совет: найди фото банки в интернете, нажми ПКМ -> "Копировать адрес картинки" и вставь сюда.</small>
 
             <label>Цвет банки (для градиента)</label>
-            <input type="color" id="canColor" value="#007bff">
+            <input type="color" id="canColor" value="#ffcc00">
 
             <label>Оценка (от 1 до 10)</label>
             <input type="number" id="canRating" min="1" max="10" value="10">
+
+            <!-- НОВЫЕ ПОЛЯ -->
+            <label>Вкус (например: Манго, Кола, Ягоды)</label>
+            <input type="text" id="canTaste" placeholder="Манго">
+
+            <label>Газация (например: Сильная, Средняя, Слабая)</label>
+            <input type="text" id="canGas" placeholder="Средняя">
+
+            <label>Бодрость (например: Прет 5 часов, Слабая)</label>
+            <input type="text" id="canEnergy" placeholder="Бодрит отлично">
+
+            <label>Твой отзыв (плюсы/минусы)</label>
+            <textarea id="canReview" placeholder="Вкус бомба, но сахара слишком много..."></textarea>
 
             <button type="submit">Добавить в каталог</button>
         </form>
@@ -46,24 +59,25 @@
 
     <script src="app.js"></script>
     <script>
-        // Логика добавления банки
         document.getElementById('addCanForm').addEventListener('submit', function(e) {
             e.preventDefault();
-
             const newCan = {
-                id: Date.now(),
+                id: Date.now().toString(), // Уникальный ID на основе времени
                 name: document.getElementById('canName').value,
                 brand: document.getElementById('canBrand').value,
                 image: document.getElementById('canImage').value,
                 color: document.getElementById('canColor').value,
-                rating: document.getElementById('canRating').value
+                rating: document.getElementById('canRating').value,
+                taste: document.getElementById('canTaste').value,
+                gas: document.getElementById('canGas').value,
+                energy: document.getElementById('canEnergy').value,
+                review: document.getElementById('canReview').value
             };
 
-            // Достаем текущие банки из памяти или создаем пустой массив
             let cans = JSON.parse(localStorage.getItem('energyCans')) || [];
+            // Удаляем старые тестовые банки, если они без ID (чтобы не было дублей)
+            cans = cans.filter(c => c.id);
             cans.push(newCan);
-            
-            // Сохраняем обратно
             localStorage.setItem('energyCans', JSON.stringify(cans));
 
             alert('Банка успешно добавлена!');
