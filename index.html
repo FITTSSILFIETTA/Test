@@ -11,8 +11,7 @@
         <div class="logo" style="font-size: 22px;">⚡ FITTSSILFI</div>
         <nav>
             <a href="index.html">Каталог</a>
-            <!-- Скрытая админка в виде шестеренки -->
-            <a href="#" onclick="askPassword()" class="btn-admin" title="Админ-панель" style="background: none; padding: 5px; font-size: 20px; text-decoration: none;">⚙️</a>
+            <a href="login.html" style="font-size: 20px; text-decoration: none;" title="Вход для админа">🔑</a>
         </nav>
     </header>
 
@@ -30,19 +29,5 @@
     </main>
 
     <script src="app.js"></script>
-    
-    <!-- Скрипт для пароля админки -->
-    <script>
-        function askPassword() {
-            // Твой пароль
-            const password = prompt("Введите пароль для входа в админку:");
-            
-            if (password === "Tommy Hilfiger 13") { 
-                window.location.href = "admin.html"; // Перекидывает в админку при верном пароле
-            } else if (password !== null) {
-                alert("Неверный пароль! Доступ запрещен.");
-            }
-        }
-    </script>
 </body>
 </html>
