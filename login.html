@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход - FITTSSILFI</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .login-box { background: #fff; padding: 40px 20px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 400px; margin: 50px auto; text-align: center; }
+        .login-box input { width: 100%; padding: 15px; margin: 20px 0; border: 1px solid var(--border); border-radius: 8px; font-size: 16px; text-align: center; }
+        .login-box button { width: 100%; padding: 15px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; font-weight: bold; }
+        .login-box button:hover { background: #0056b3; }
+        .error-msg { color: red; font-size: 14px; display: none; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">⚡ FITTSSILFI</div>
+        <nav><a href="index.html">На главную</a></nav>
+    </header>
+
+    <main>
+        <div class="login-box">
+            <h2>Вход для админа</h2>
+            <p style="color: #777; font-size: 14px;">Введите секретный пароль для доступа к управлению каталогом.</p>
+            
+            <form id="loginForm">
+                <input type="password" id="passwordInput" placeholder="Твой пароль..." required>
+                <div class="error-msg" id="errorMsg">Неверный пароль! Попробуй еще раз.</div>
+                <button type="submit">Войти</button>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const pass = document.getElementById('passwordInput').value;
+            const correctPass = "Tommy Hilfiger 13"; // Твой пароль
+
+            if (pass === correctPass) {
+                // Если пароль верный, сохраняем "ключ" в память браузера и пускаем в админку
+                sessionStorage.setItem('isAdmin', 'true');
+                window.location.href = "admin.html";
+            } else {
+                document.getElementById('errorMsg').style.display = 'block';
+                document.getElementById('passwordInput').value = '';
+            }
+        });
+    </script>
+</body>
+</html>
