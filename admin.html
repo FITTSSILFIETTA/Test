@@ -19,13 +19,17 @@
         .btn-edit { background: #ffc107; color: #000; }
         .btn-delete { background: #dc3545; color: #fff; }
 
-        /* Стили для статистики и логов */
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
         .stat-card { background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #e0e0e0; }
         .stat-card h4 { margin: 0 0 5px; color: #777; font-size: 14px; font-weight: normal; }
         .stat-card span { font-size: 24px; font-weight: bold; color: var(--text-color); }
         .log-list { max-height: 200px; overflow-y: auto; background: #1e1e1e; color: #00ff00; font-family: monospace; font-size: 12px; padding: 15px; border-radius: 8px; }
         .log-entry { margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+
+        /* Стили для ИИ-кнопки */
+        .ai-helper-btn { background: #8e44ad; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 15px; font-weight: bold; font-size: 16px; display: flex; justify-content: center; align-items: center; gap: 8px; transition: 0.3s; }
+        .ai-helper-btn:hover { background: #732d91; }
+        .ai-status { text-align: center; color: #8e44ad; font-size: 14px; margin-top: 10px; display: none; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -43,54 +47,60 @@
     <main>
         <div class="admin-container">
             
-            <!-- СТАТИСТИКА -->
             <div class="panel">
                 <h2 style="margin-bottom: 20px;">📊 Статистика коллекции</h2>
-                <div class="stats-grid" id="statsGrid">
-                    <!-- Заполняется через JS -->
-                </div>
+                <div class="stats-grid" id="statsGrid"></div>
             </div>
 
-            <!-- ФОРМА -->
             <div class="panel admin-form">
                 <h2 id="formTitle" style="text-align: center; margin-bottom: 20px;">Добавить новую банку</h2>
                 <form id="addCanForm">
                     <input type="hidden" id="editId" value="">
-                    <label>Название банки</label>
-                    <input type="text" id="canName" required placeholder="Например: Flash Up Ultra">
-                    <label>Бренд</label>
-                    <input type="text" id="canBrand" required placeholder="Например: Flash Up">
+                    
+                    <label>Название банки (введи и нажми кнопку ниже)</label>
+                    <input type="text" id="canName" required placeholder="Например: Tornado Mango">
+                    
+                    <!-- Кнопка ИИ -->
+                    <button type="button" class="ai-helper-btn" onclick="askAI()">🪄 Пусть ИИ заполнит всё за меня</button>
+                    <div id="aiStatus" class="ai-status">🔄 ИИ изучает банку и пишет данные...</div>
+
                     <label>Ссылка на картинку (URL)</label>
                     <input type="url" id="canImage" required placeholder="https://example.com/can.jpg">
+
+                    <label>Бренд</label>
+                    <input type="text" id="canBrand" required placeholder="Бренд">
+                    
                     <label>Цвет банки</label>
                     <input type="color" id="canColor" value="#ffcc00">
+                    
                     <label>Оценка (1-10)</label>
                     <input type="number" id="canRating" min="1" max="10" value="10">
+                    
                     <label>Вкус</label>
-                    <input type="text" id="canTaste" placeholder="Барбарис с ванилью">
+                    <input type="text" id="canTaste" placeholder="Вкус">
+                    
                     <label>Газация</label>
-                    <input type="text" id="canGas" placeholder="Средняя">
+                    <input type="text" id="canGas" placeholder="Газация">
+                    
                     <label>Бодрость</label>
-                    <input type="text" id="canEnergy" placeholder="Незаметная">
+                    <input type="text" id="canEnergy" placeholder="Бодрость">
+                    
                     <label>Твой отзыв</label>
-                    <textarea id="canReview" placeholder="Вкус сбалансированный..."></textarea>
+                    <textarea id="canReview" placeholder="Отзыв..."></textarea>
+                    
                     <button type="submit" id="submitBtn">Добавить в каталог</button>
                     <button type="button" id="cancelBtn" style="display:none; width: 100%; margin-top: 10px; padding: 10px; background: #6c757d; color: #fff; border: none; border-radius: 8px; cursor: pointer;" onclick="resetForm()">Отмена</button>
                 </form>
             </div>
 
-            <!-- СПИСОК БАНОК -->
             <div class="panel">
                 <h2 style="margin-bottom: 20px;">Твои банки</h2>
                 <div id="adminListContainer"></div>
             </div>
 
-            <!-- ЛОГИ -->
             <div class="panel">
                 <h2 style="margin-bottom: 20px;">📝 Журнал действий (Логи)</h2>
-                <div class="log-list" id="logContainer">
-                    <!-- Логи через JS -->
-                </div>
+                <div class="log-list" id="logContainer"></div>
                 <button onclick="clearLogs()" style="margin-top: 15px; background: #dc3545; color: #fff; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer;">Очистить логи</button>
             </div>
 
@@ -115,49 +125,79 @@
         function renderLogs() {
             const container = document.getElementById('logContainer');
             const logs = JSON.parse(localStorage.getItem('adminLogs')) || [];
-            if (logs.length === 0) {
-                container.innerHTML = '<div style="color: #888;">Логов пока нет...</div>';
-                return;
-            }
-            // Показываем последние 20 записей
+            if (logs.length === 0) { container.innerHTML = '<div style="color: #888;">Логов пока нет...</div>'; return; }
             container.innerHTML = logs.slice(-20).reverse().map(log => `<div class="log-entry">${log}</div>`).join('');
         }
 
         function clearLogs() {
-            if(confirm('Очистить все логи?')) {
-                localStorage.removeItem('adminLogs');
-                renderLogs();
+            if(confirm('Очистить все логи?')) { localStorage.removeItem('adminLogs'); renderLogs(); }
+        }
+
+        // --- УМНЫЙ ИИ-ПОМОЩНИК ---
+        async function askAI() {
+            const name = document.getElementById('canName').value;
+            if (!name) { alert("Сначала введи название банки! Например: Tornado Mango"); return; }
+
+            const status = document.getElementById('aiStatus');
+            status.style.display = 'block';
+            
+            // Очищаем поля перед заполнением
+            document.getElementById('canBrand').value = '';
+            document.getElementById('canTaste').value = '';
+            document.getElementById('canGas').value = '';
+            document.getElementById('canEnergy').value = '';
+            document.getElementById('canReview').value = '';
+
+            try {
+                // Составляем строгий промпт
+                const prompt = `Ты профессиональный дегустатор энергетиков. Напиши данные о напитке "${name}". 
+                Ответь СТРОГО в формате JSON без лишнего текста, без markdown:
+                {"brand": "название бренда", "taste": "вкус (например: манго, цитрус, ягоды)", "gas": "газация (сильная/средняя/слабая)", "energy": "эффект бодрости (например: мощный, средний, слабый)", "review": "твой короткий отзыв об этом напитке"}`;
+
+                const response = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}`);
+                let aiText = await response.text();
+                
+                // Очищаем ответ от возможного мусора (кавычек, markdown)
+                aiText = aiText.replace(/```json/g, '').replace(/```/g, '').trim();
+                
+                // Ищем первую фигурную скобку и последнюю
+                const start = aiText.indexOf('{');
+                const end = aiText.lastIndexOf('}');
+                if (start !== -1 && end !== -1) {
+                    aiText = aiText.substring(start, end + 1);
+                }
+
+                const data = JSON.parse(aiText);
+
+                // Заполняем поля с небольшой задержкой для эффекта "печатания"
+                setTimeout(() => { document.getElementById('canBrand').value = data.brand || ''; }, 300);
+                setTimeout(() => { document.getElementById('canTaste').value = data.taste || ''; }, 600);
+                setTimeout(() => { document.getElementById('canGas').value = data.gas || ''; }, 900);
+                setTimeout(() => { document.getElementById('canEnergy').value = data.energy || ''; }, 1200);
+                setTimeout(() => { 
+                    document.getElementById('canReview').value = data.review || ''; 
+                    status.style.display = 'none'; // Прячем статус после заполнения
+                    addLog(`🪄 ИИ заполнил данные для: ${name}`);
+                }, 1500);
+
+            } catch (error) {
+                console.error(error);
+                status.innerHTML = "❌ ИИ не смог распознать банку. Заполни вручную.";
+                setTimeout(() => status.style.display = 'none', 3000);
             }
         }
 
         // --- СТАТИСТИКА ---
         function renderStats() {
             const grid = document.getElementById('statsGrid');
-            if (cans.length === 0) {
-                grid.innerHTML = '<p style="grid-column: span 2; text-align:center; color:#777;">Добавь банки, чтобы увидеть статистику.</p>';
-                return;
-            }
-            
-            // Считаем средний балл
+            if (cans.length === 0) { grid.innerHTML = '<p style="grid-column: span 2; text-align:center; color:#777;">Добавь банки, чтобы увидеть статистику.</p>'; return; }
             const totalRating = cans.reduce((sum, can) => sum + Number(can.rating), 0);
             const avgRating = (totalRating / cans.length).toFixed(1);
-            
-            // Считаем уникальные бренды
             const uniqueBrands = new Set(cans.map(c => c.brand)).size;
-
             grid.innerHTML = `
-                <div class="stat-card">
-                    <h4>Всего банок</h4>
-                    <span>${cans.length}</span>
-                </div>
-                <div class="stat-card">
-                    <h4>Средний балл</h4>
-                    <span>${avgRating} / 10</span>
-                </div>
-                <div class="stat-card" style="grid-column: span 2;">
-                    <h4>Уникальных брендов</h4>
-                    <span>${uniqueBrands}</span>
-                </div>
+                <div class="stat-card"><h4>Всего банок</h4><span>${cans.length}</span></div>
+                <div class="stat-card"><h4>Средний балл</h4><span>${avgRating} / 10</span></div>
+                <div class="stat-card" style="grid-column: span 2;"><h4>Уникальных брендов</h4><span>${uniqueBrands}</span></div>
             `;
         }
 
@@ -165,10 +205,7 @@
         function renderAdminList() {
             const container = document.getElementById('adminListContainer');
             container.innerHTML = '';
-            if (cans.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #777;">Пока нет добавленных банок.</p>';
-                return;
-            }
+            if (cans.length === 0) { container.innerHTML = '<p style="text-align: center; color: #777;">Пока нет добавленных банок.</p>'; return; }
             const sortedCans = [...cans].reverse();
             sortedCans.forEach(can => {
                 const item = document.createElement('div');
@@ -176,10 +213,7 @@
                 item.innerHTML = `
                     <div class="admin-item-info">
                         <img src="${can.image}" alt="${can.name}" onerror="this.src='https://via.placeholder.com/40x60?text=No'">
-                        <div>
-                            <strong>${can.name}</strong><br>
-                            <small style="color: #777;">${can.brand} | ${can.rating}/10</small>
-                        </div>
+                        <div><strong>${can.name}</strong><br><small style="color: #777;">${can.brand} | ${can.rating}/10</small></div>
                     </div>
                     <div class="admin-item-actions">
                         <button class="btn-edit" onclick="editCan('${can.id}')">✏️</button>
@@ -221,7 +255,7 @@
             localStorage.setItem('energyCans', JSON.stringify(cans));
             resetForm();
             renderAdminList();
-            renderStats(); // Обновляем статистику
+            renderStats();
         });
 
         function editCan(id) {
@@ -251,7 +285,7 @@
                 localStorage.setItem('energyCans', JSON.stringify(cans));
                 addLog(`🗑️ Удалена банка: ${canName}`);
                 renderAdminList();
-                renderStats(); // Обновляем статистику
+                renderStats();
             }
         }
 
@@ -264,11 +298,9 @@
             document.getElementById('cancelBtn').style.display = 'none';
         }
 
-        // Инициализация
         renderAdminList();
         renderStats();
         renderLogs();
-        addLog('🔐 Выполнен вход в админ-панель');
     </script>
 </body>
 </html>
