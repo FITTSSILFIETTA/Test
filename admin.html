@@ -9,14 +9,11 @@
         .admin-container { display: flex; flex-direction: column; gap: 30px; max-width: 800px; margin: 0 auto; }
         .admin-form { background: #fff; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .admin-form label { display: block; margin-top: 15px; font-weight: 500; }
-        .admin-form input, .admin-form textarea, .admin-form select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; }
+        .admin-form input, .admin-form textarea { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; }
         .admin-form button[type="submit"] { margin-top: 20px; width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
-        .admin-form button[type="submit"]:hover { background: #0056b3; }
         
-        /* Стили для списка банок */
         .admin-list { background: #fff; padding: 20px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .admin-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #eee; }
-        .admin-item:last-child { border-bottom: none; }
         .admin-item-info { display: flex; align-items: center; gap: 15px; }
         .admin-item-info img { width: 40px; height: 60px; object-fit: contain; background: #f8f9fa; border-radius: 4px; }
         .admin-item-actions button { padding: 8px 12px; margin-left: 5px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; }
@@ -34,11 +31,10 @@
 
     <main>
         <div class="admin-container">
-            <!-- ФОРМА ДОБАВЛЕНИЯ / РЕДАКТИРОВАНИЯ -->
             <div class="admin-form">
                 <h2 id="formTitle" style="text-align: center; margin-bottom: 20px;">Добавить новую банку</h2>
                 <form id="addCanForm">
-                    <input type="hidden" id="editId" value=""> <!-- Скрытое поле для ID при редактировании -->
+                    <input type="hidden" id="editId" value="">
                     
                     <label>Название банки</label>
                     <input type="text" id="canName" required placeholder="Например: Flash Up Ultra">
@@ -72,7 +68,6 @@
                 </form>
             </div>
 
-            <!-- СПИСОК ВСЕХ БАНОК -->
             <div class="admin-list">
                 <h2 style="margin-bottom: 20px;">Твои банки</h2>
                 <div id="adminListContainer"></div>
@@ -80,11 +75,14 @@
         </div>
     </main>
 
-    <script src="app.js"></script>
     <script>
+        // Загружаем данные
         let cans = JSON.parse(localStorage.getItem('energyCans')) || [];
 
-        // Отрисовка списка банок в админке
+        // ФИКС: Если в массиве есть банки без ID (старые тестовые), удаляем их
+        cans = cans.filter(can => can && can.id);
+        localStorage.setItem('energyCans', JSON.stringify(cans));
+
         function renderAdminList() {
             const container = document.getElementById('adminListContainer');
             container.innerHTML = '';
@@ -94,7 +92,6 @@
                 return;
             }
 
-            // Показываем новые сверху
             const sortedCans = [...cans].reverse();
 
             sortedCans.forEach(can => {
@@ -117,13 +114,12 @@
             });
         }
 
-        // Добавление или сохранение изменений
         document.getElementById('addCanForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const editId = document.getElementById('editId').value;
             
             const canData = {
-                id: editId || Date.now().toString(),
+                id: editId || Date.now().toString(), // Всегда создаем уникальный ID
                 name: document.getElementById('canName').value,
                 brand: document.getElementById('canBrand').value,
                 image: document.getElementById('canImage').value,
@@ -136,12 +132,10 @@
             };
 
             if (editId) {
-                // Редактирование существующей
                 const index = cans.findIndex(c => c.id === editId);
-                cans[index] = canData;
+                if (index !== -1) cans[index] = canData;
                 alert('Банка обновлена!');
             } else {
-                // Добавление новой
                 cans.push(canData);
                 alert('Банка добавлена!');
             }
@@ -151,7 +145,6 @@
             renderAdminList();
         });
 
-        // Функция заполнения формы для редактирования
         function editCan(id) {
             const can = cans.find(c => c.id === id);
             if (!can) return;
@@ -160,7 +153,7 @@
             document.getElementById('canName').value = can.name;
             document.getElementById('canBrand').value = can.brand;
             document.getElementById('canImage').value = can.image;
-            document.getElementById('canColor').value = can.color;
+            document.getElementById('canColor').value = can.color || '#ffcc00';
             document.getElementById('canRating').value = can.rating;
             document.getElementById('canTaste').value = can.taste || '';
             document.getElementById('canGas').value = can.gas || '';
@@ -171,21 +164,18 @@
             document.getElementById('submitBtn').innerText = 'Сохранить изменения';
             document.getElementById('submitBtn').style.background = '#28a745';
             document.getElementById('cancelBtn').style.display = 'block';
-            
-            // Прокручиваем вверх к форме
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // Удаление
         function deleteCan(id) {
             if (confirm('Ты точно хочешь удалить эту банку?')) {
+                // Оставляем только те, чей ID НЕ совпадает с удаляемым
                 cans = cans.filter(c => c.id !== id);
                 localStorage.setItem('energyCans', JSON.stringify(cans));
                 renderAdminList();
             }
         }
 
-        // Сброс формы
         function resetForm() {
             document.getElementById('addCanForm').reset();
             document.getElementById('editId').value = '';
@@ -195,7 +185,6 @@
             document.getElementById('cancelBtn').style.display = 'none';
         }
 
-        // Запуск при загрузке
         renderAdminList();
     </script>
 </body>
