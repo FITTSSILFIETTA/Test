@@ -12,31 +12,27 @@
         .detail-row span:first-child { font-weight: 500; color: #777; }
         .ai-box { background: #f0f7ff; padding: 20px; border-radius: 12px; margin-top: 30px; border: 1px solid #cce5ff; }
         .ai-box textarea { width: 100%; height: 80px; padding: 10px; border: 1px solid #b3d7ff; border-radius: 8px; margin-bottom: 10px; font-family: inherit; resize: vertical; }
-        .ai-box button { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 16px; }
-        .ai-result { margin-top: 15px; font-style: italic; color: #333; background: #fff; padding: 15px; border-radius: 8px; border-left: 4px solid var(--accent); display: none; }
+        .ai-box button { background: var(--accent); color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; transition: 0.3s; }
+        .ai-box button:hover { background: #0056b3; }
+        .ai-result { margin-top: 15px; font-style: italic; color: #333; background: #fff; padding: 15px; border-radius: 8px; border-left: 4px solid var(--accent); display: none; line-height: 1.5; }
+        .loading-text { color: #0056b3; font-weight: bold; }
     </style>
 </head>
 <body>
     <header>
         <div class="logo">⚡ FITTSSILFI</div>
-        <nav>
-            <a href="index.html">Назад в каталог</a>
-        </nav>
+        <nav><a href="index.html">Назад в каталог</a></nav>
     </header>
 
     <main>
         <div id="canContainer" class="can-detail">
-            <!-- Сюда подгрузится информация о банке -->
             <p style="text-align: center;">Загрузка...</p>
         </div>
     </main>
 
     <script>
-        // Получаем ID банки из ссылки
         const urlParams = new URLSearchParams(window.location.search);
         const canId = urlParams.get('id');
-
-        // Загружаем данные
         const cans = JSON.parse(localStorage.getItem('energyCans')) || [];
         const currentCan = cans.find(c => c.id === canId);
 
@@ -59,10 +55,9 @@
                     <p style="line-height: 1.6; color: #444;">${currentCan.review || 'Текст отзыва пока не добавлен.'}</p>
                 </div>
 
-                <!-- Блок ИИ-помощника -->
                 <div class="ai-box">
                     <h3 style="margin-bottom: 10px; color: #0056b3;">🤖 ИИ-Помощник по отзывам</h3>
-                    <p style="font-size: 14px; margin-bottom: 10px; color: #555;">Напиши свои мысли (например: "вкус сладкий, но бодрит слабо, дизайн топ"), и ИИ сделает из этого красивый текст.</p>
+                    <p style="font-size: 14px; margin-bottom: 10px; color: #555;">Напиши пару слов (например: "сладко, бодрит, дизайн топ"), и ИИ напишет красивый отзыв.</p>
                     <textarea id="aiInput" placeholder="Твои мысли о банке..."></textarea>
                     <button onclick="generateAI()">Сгенерировать отзыв</button>
                     <div id="aiResult" class="ai-result"></div>
@@ -72,8 +67,8 @@
             document.getElementById('canContainer').innerHTML = '<p style="text-align: center; color: red;">Банка не найдена.</p>';
         }
 
-        // Простая имитация ИИ для оформления текста (работает без интернета)
-        function generateAI() {
+        // НАСТОЯЩИЙ ИИ (через бесплатный API)
+        async function generateAI() {
             const input = document.getElementById('aiInput').value;
             const resultDiv = document.getElementById('aiResult');
             
@@ -83,24 +78,27 @@
             }
 
             resultDiv.style.display = 'block';
-            resultDiv.innerHTML = '🔄 ИИ думает...';
+            resultDiv.innerHTML = '<span class="loading-text">🔄 ИИ думает над твоим отзывом...</span>';
+            resultDiv.style.borderLeftColor = '#0056b3';
 
-            // Имитация задержки работы ИИ (1.5 секунды)
-            setTimeout(() => {
-                // Локальный "ИИ", который переделывает текст в красивый отзыв
-                const templates = [
-                    `💡 <strong>Вердикт от ИИ:</strong> Отличный выбор! ${input} Это действительно ощущается при дегустации. Рекомендую попробовать всем любителям энергетиков.`,
-                    `🔥 <strong>Мнение ИИ:</strong> Согласен с автором. ${input} Такой вкус точно запомнится, а дизайн банки добавляет баллов.`,
-                    `⚡ <strong>Комментарий ИИ:</strong> Если кратко — ${input} Напиток хорошо справляется со своей задачей и оставляет приятное послевкусие.`
-                ];
+            try {
+                // Промпт для ИИ (мы просим его написать отзыв в стиле блогера)
+                const prompt = `Ты профессиональный блогер-дегустатор энергетиков. Напиши короткий, живой и вкусный отзыв (3-4 предложения) о напитке "${currentCan.name}" от бренда "${currentCan.brand}". Вкус: "${currentCan.taste}". Вот мои сырые мысли: "${input}". Сделай текст цепляющим, используй эмодзи.`;
                 
-                // Выбираем случайный шаблон
-                const randomTemplate = templates[Math.floor(Math.random() * templates.length)];
-                resultDiv.innerHTML = randomTemplate;
+                // Отправляем запрос на бесплатный сервер
+                const response = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}`);
                 
-                // Автоматически подставляем в отзыв (если захочешь сохранить)
-                // currentCan.review = randomTemplate; // Пока просто показываем
-            }, 1500);
+                if (!response.ok) throw new Error('Ошибка сети');
+                
+                const aiText = await response.text();
+                
+                resultDiv.innerHTML = `<strong>Вердикт ИИ:</strong> ${aiText}`;
+                
+            } catch (error) {
+                console.error(error);
+                // Если интернет отвалился, используем локальный шаблон
+                resultDiv.innerHTML = `💡 <strong>Вердикт ИИ:</strong> Отличный выбор! ${input}. Этот напиток отлично вписывается в твою коллекцию, а дизайн банки добавляет ему баллов.`;
+            }
         }
     </script>
 </body>
