@@ -57,7 +57,8 @@
                 <h2 id="formTitle" style="text-align: center; margin-bottom: 20px;">Добавить новую банку</h2>
                 <form id="addCanForm">
                     <input type="hidden" id="editId" value="">
-                    
+
+                    <div id="suggestionsBox" style="background: #fff; border: 1px solid #ccc; border-radius: 8px; max-height: 150px; overflow-y: auto; display: none; position: relative; z-index: 10; margin-top: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>
                     <label>Название банки (введи и нажми кнопку ниже)</label>
                     <input type="text" id="canName" required placeholder="Например: Tornado Mango">
                     
@@ -135,6 +136,54 @@
         }
 
         // --- УМНЫЙ ИИ-ПОМОЩНИК ---
+       // --- АВТОДОПОЛНЕНИЕ НАЗВАНИЙ ---
+        const nameInput = document.getElementById('canName');
+        const suggestionsBox = document.getElementById('suggestionsBox');
+
+        nameInput.addEventListener('input', function() {
+            const value = this.value.toLowerCase().trim();
+            suggestionsBox.innerHTML = ''; // Очищаем старые подсказки
+
+            if (value.length < 2) {
+                suggestionsBox.style.display = 'none';
+                return;
+            }
+
+            // Ищем совпадения в нашей базе (database.js)
+            const matches = Object.keys(energyDatabase).filter(key => key.includes(value));
+
+            if (matches.length > 0) {
+                suggestionsBox.style.display = 'block';
+                matches.forEach(match => {
+                    const div = document.createElement('div');
+                    div.style.padding = '10px';
+                    div.style.cursor = 'pointer';
+                    div.style.borderBottom = '1px solid #eee';
+                    div.innerText = match; // Выводим название из базы
+                    
+                    // Делаем красивый эффект при наведении
+                    div.onmouseover = () => div.style.background = '#f0f7ff';
+                    div.onmouseout = () => div.style.background = 'transparent';
+
+                    // Если кликнули на подсказку
+                    div.onclick = function() {
+                        nameInput.value = match; // Подставляем название в поле
+                        suggestionsBox.style.display = 'none'; // Прячем подсказки
+                        askAI(); // СРАЗУ ЗАПУСКАЕМ ИИ-ЗАПОЛНЕНИЕ
+                    };
+                    suggestionsBox.appendChild(div);
+                });
+            } else {
+                suggestionsBox.style.display = 'none';
+            }
+        });
+
+        // Прячем подсказки, если кликнули мимо поля
+        document.addEventListener('click', function(e) {
+            if (e.target !== nameInput) {
+                suggestionsBox.style.display = 'none';
+            }
+        });
         async function askAI() {
             const name = document.getElementById('canName').value;
             if (!name) { alert("Сначала введи название банки! Например: Tornado Mango"); return; }
