@@ -148,7 +148,18 @@
             document.getElementById('canGas').value = '';
             document.getElementById('canEnergy').value = '';
             document.getElementById('canReview').value = '';
-
+// Ищем в отдельном файле database.js
+            const searchKey = name.toLowerCase().trim();
+            if (typeof energyDatabase !== 'undefined' && energyDatabase[searchKey]) {
+                const data = energyDatabase[searchKey];
+                document.getElementById('canBrand').value = data.brand;
+                document.getElementById('canTaste').value = data.taste;
+                document.getElementById('canGas').value = data.gas;
+                document.getElementById('canEnergy').value = data.energy;
+                document.getElementById('canReview').value = data.review;
+                status.style.display = 'none'; // Прячем надпись "ИИ думает"
+                return; // Останавливаем функцию, чтобы не шла в интернет
+            }
             try {
                 // Составляем строгий промпт
                 const prompt = `Ты эксперт по энергетическим напиткам. Дай ТОЧНУЮ информацию о напитке "${name}". 
